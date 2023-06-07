@@ -24,10 +24,14 @@ def smartoven_processor(device: SmartOven, message):
             device.internal_temp = message['internal_temp']
             device.ambient_temp = message['ambient_temp']
             device.ambient_hum = message['ambient_hum']
+            device.target_temp = message['target_temp']
+            device.remain_time = message['remain_time']
         else:
             device.internal_temp = -1
             device.ambient_temp = -1
             device.ambient_hum = -1
+            device.target_temp = -1
+            device.remain_time = -1
 
 
 def heart_sender(device: SmartOven):

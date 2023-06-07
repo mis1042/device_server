@@ -20,11 +20,13 @@ class SmartOven(Device):
     def __init__(self, topic, connect_name, server, last_seen):
         Device.__init__(self, topic, connect_name, server, last_seen)
         self.status = ''
-        self.internal_temp = 0
-        self.ambient_temp = 0
-        self.ambient_hum = 0
+        self.internal_temp = -1
+        self.ambient_temp = -1
+        self.ambient_hum = -1
         self.plan_list = []
         self.message_list = []
+        self.target_temp = -1
+        self.remain_time = -1
 
     def publish_ack(self, message):
         seq = random.randint(0, 9999999)

@@ -21,6 +21,8 @@ def get_device_info(device_type, connect_name):
         "internal_temp": device.internal_temp,
         "ambient_temp": device.ambient_temp,
         "ambient_hum": device.ambient_hum,
+        "target_temp": device.target_temp,
+        "remain_time": device.remain_time,
         "device_status": device.status,
         "work_plan": device.plan_list
     })

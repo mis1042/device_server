@@ -15,7 +15,7 @@ client_id = f'Python-Server'
 def connect_to_server():
     def on_connect(client, userdata, flags, code):
         if code == 0:
-            print("Connected!")
+            print("Connected To MQTT!")
         else:
             print("Failed to connect, code %d\n", code)
 
@@ -40,6 +40,8 @@ def receive(client: mqtt_client):
             if msg_data['operation'] == 'login' and msg_topic == 'device/smartoven/login':
                 device_connect_name = msg_data['connect_name']
                 device_topic = f"device/smartoven/{device_connect_name}"
+                if device_topic in processor.device_list:
+                    processor.device_list.pop(device_topic)
                 device = processor.SmartOven(device_topic, device_connect_name, client, time.time())
                 device.heart_sender = threading.Thread(target=processor.device_processor.heart_sender, args=(device,))
                 processor.device_list[device_topic] = device

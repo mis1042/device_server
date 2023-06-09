@@ -8,8 +8,9 @@ from processor import SmartOven
 def smartoven_processor(device: SmartOven, message):
     if message['operation'] == 'ack':
         for i in device.message_list:
-            device.message_list.remove(i)
-            break
+            if i['seq'] == message['ack_seq']:
+                device.message_list.remove(i)
+                break
 
     if message['operation'] == 'heart':
         device.last_seen = time.time()

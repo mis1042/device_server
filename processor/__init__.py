@@ -60,3 +60,10 @@ class SmartOven(Device):
             "operation": "delete_work_plan",
             "plan_id": plan_id
         })
+
+
+def judge(seq, device: SmartOven):
+    for i in device.message_list:
+        if seq in i.values():
+            return True
+    return False

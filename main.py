@@ -4,6 +4,7 @@ import time
 import flask
 
 import mqtt
+import processor
 from processor import device_list
 
 threading.Thread(target=mqtt.start).start()
@@ -40,7 +41,7 @@ def set_working(device_type, connect_name):
     worktime = flask.request.json['work_time']
     seq = device.set_working(temp, worktime)
     start_time = time.time()
-    while seq in device.message_list:
+    while processor.judge(seq, device):
         if time.time() - start_time > 5:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})
@@ -60,7 +61,7 @@ def add_work_plan(device_type, connect_name):
     target_temp = flask.request.json['target_temp']
     seq = device.add_work_plan(plan_id, start_time, work_time, target_temp)
     start_time = time.time()
-    while seq in device.message_list:
+    while processor.judge(seq, device):
         if time.time() - start_time > 5:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})
@@ -77,7 +78,7 @@ def delete_work_plan(device_type, connect_name):
     plan_id = flask.request.json['plan_id']
     seq = device.delete_work_plan(plan_id)
     start_time = time.time()
-    while seq in device.message_list:
+    while processor.judge(seq, device):
         if time.time() - start_time > 5:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})

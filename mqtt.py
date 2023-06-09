@@ -7,9 +7,14 @@ from paho.mqtt import client as mqtt_client
 
 import processor.device_processor
 
-broker = '127.0.0.1'
-port = 1883
-client_id = f'Python-Server'
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+broker = config['broker']
+port = config['port']
+client_id = config['client_id']
+user = config['user']
+password = config['password']
 
 
 def connect_to_server():
@@ -18,8 +23,8 @@ def connect_to_server():
             print("Connected To MQTT!")
         else:
             print("Failed to connect, code %d\n", code)
-
     client = mqtt_client.Client(client_id)
+    client.username_pw_set(user, password)
     client.on_connect = on_connect
     client.connect(broker, port)
     return client

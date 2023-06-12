@@ -2,14 +2,14 @@ import threading
 import time
 
 import flask
-
+from flask_cors import CORS
 import mqtt
 import processor
 from processor import device_list
 
 threading.Thread(target=mqtt.start).start()
 app = flask.Flask(__name__)
-
+CORS(app, resources=r'/*')
 
 @app.route('/device/<device_type>/<connect_name>/get_info', methods=['GET'])
 def get_device_info(device_type, connect_name):

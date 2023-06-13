@@ -19,7 +19,7 @@ class Device:
 class SmartOven(Device):
     def __init__(self, topic, connect_name, server, last_seen):
         Device.__init__(self, topic, connect_name, server, last_seen)
-        self.status = ''
+        self.status = 'free'
         self.internal_temp = -1
         self.ambient_temp = -1
         self.ambient_hum = -1

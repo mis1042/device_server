@@ -42,8 +42,8 @@ def heart_sender(device: SmartOven):
             "source": "server",
             "operation": "heart",
         }))
-        time.sleep(5)
-        if time.time() - device.last_seen > 30:
+        time.sleep(2)
+        if time.time() - device.last_seen > 20:
             processor.device_list.pop(device.topic)
             print(f"Device {device.connect_name} offline!")
             break

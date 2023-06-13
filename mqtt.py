@@ -46,6 +46,7 @@ def receive(client: mqtt_client):
                 device_connect_name = msg_data['connect_name']
                 device_topic = f"device/smartoven/{device_connect_name}"
                 if device_topic in processor.device_list:
+                    processor.device_list[device_topic].heart_sender._stop()
                     processor.device_list.pop(device_topic)
                 device = processor.SmartOven(device_topic, device_connect_name, client, time.time())
                 device.heart_sender = threading.Thread(target=processor.device_processor.heart_sender, args=(device,))

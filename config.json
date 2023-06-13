@@ -3,5 +3,6 @@
   "port": 1883,
   "client_id": "Python Server",
   "user": "n",
-  "password": ""
+  "password": "",
+  "openai_key": ""
 }

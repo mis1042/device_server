@@ -1,6 +1,8 @@
 import threading
 import time
-
+import openai
+import json
+import os
 import flask
 from flask_cors import CORS
 import mqtt
@@ -10,6 +12,11 @@ from processor import device_list
 threading.Thread(target=mqtt.start).start()
 app = flask.Flask(__name__)
 CORS(app, resources=r'/*')
+os.environ["HTTP_PROXY"] = "127.0.0.1:7890"
+os.environ["HTTPS_PROXY"] = "127.0.0.1:7890"
+with open('config.json', 'r') as f:
+    openai_key = json.loads(f.read())['openai_key']
+
 
 @app.route('/device/<device_type>/<connect_name>/get_info', methods=['GET'])
 def get_device_info(device_type, connect_name):
@@ -82,3 +89,31 @@ def delete_work_plan(device_type, connect_name):
         if time.time() - start_time > 10:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})
+
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    if flask.request.json is None:
+        return flask.jsonify({"status": "failed", "reason": "invalid request"})
+    content = flask.request.json['content']
+    request_content = f"""
+    以下列的格式回复烘干{content}的每一步的时间与温度，只返回下面的内容不需要其他的
+{
+    "steps":[
+        {
+    "temp":20,
+        // 使用摄氏度
+        "time":20
+        //使用分钟
+        },
+        ...
+    ]
+}
+    """
+    rsp = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": request_content}
+        ]
+    )
+    return json.dumps(json.loads(rsp.get("choices")[0]["message"]["content"]))

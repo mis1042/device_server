@@ -42,7 +42,7 @@ def set_working(device_type, connect_name):
     seq = device.set_working(temp, worktime)
     start_time = time.time()
     while processor.judge(seq, device):
-        if time.time() - start_time > 5:
+        if time.time() - start_time > 10:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})
 
@@ -62,7 +62,7 @@ def add_work_plan(device_type, connect_name):
     seq = device.add_work_plan(plan_id, start_time, work_time, target_temp)
     start_time = time.time()
     while processor.judge(seq, device):
-        if time.time() - start_time > 5:
+        if time.time() - start_time > 10:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})
 
@@ -79,6 +79,6 @@ def delete_work_plan(device_type, connect_name):
     seq = device.delete_work_plan(plan_id)
     start_time = time.time()
     while processor.judge(seq, device):
-        if time.time() - start_time > 5:
+        if time.time() - start_time > 10:
             return flask.jsonify({"status": "failed", "reason": "device not responding"})
     return flask.jsonify({"status": "success"})

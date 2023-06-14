@@ -62,6 +62,11 @@ class SmartOven(Device):
         })
 
 
+class ObservationTower(Device):
+    def __init__(self, topic, connect_name, server, last_seen):
+        Device.__init__(self, topic, connect_name, server, last_seen)
+
+
 def judge(seq, device: SmartOven):
     for i in device.message_list:
         if seq in i.values():

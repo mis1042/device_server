@@ -7,22 +7,14 @@ from paho.mqtt import client as mqtt_client
 
 import processor.device_processor
 
-with open('config.json', 'r') as f:
-    config = json.load(f)
 
-broker = config['broker']
-port = config['port']
-client_id = config['client_id']
-user = config['user']
-password = config['password']
-
-
-def connect_to_server():
+def connect_to_server(client_id, user, password, broker, port):
     def on_connect(client, userdata, flags, code):
         if code == 0:
             print("Connected To MQTT!")
         else:
             print("Failed to connect, code %d\n", code)
+
     client = mqtt_client.Client(client_id)
     client.username_pw_set(user, password)
     client.on_connect = on_connect
@@ -41,43 +33,28 @@ def receive(client: mqtt_client):
             pass
 
         if msg_data['source'] == 'device':
+            if msg_topic.split('/')[1] == 'smartoven':
+                # SmartOven Device Topic: device/smartoven/xxx
 
-            if msg_data['operation'] == 'login' and msg_topic == 'device/smartoven/login':
-                device_connect_name = msg_data['connect_name']
-                device_topic = f"device/smartoven/{device_connect_name}"
-                if device_topic in processor.device_list:
-                    processor.device_list[device_topic].heart_sender._stop()
-                    processor.device_list.pop(device_topic)
-                device = processor.SmartOven(device_topic, device_connect_name, client, time.time())
-                device.heart_sender = threading.Thread(target=processor.device_processor.heart_sender, args=(device,))
-                processor.device_list[device_topic] = device
-                message = {
-                    "source": "server",
-                    "operation": "login",
-                    "connect_name": device_connect_name,
-                    "status": "success"
-                }
-                if msg_data['require_time']:
-                    message['time'] = time.time()
-                client.publish(device_topic, json.dumps(message))
-                client.subscribe(device_topic)
-                device.heart_sender.start()
-                print(f"Device {device_connect_name} login success!")
+                # SmartOven Login
+                if msg_data['operation'] == 'login' and msg_topic.split('/')[2] == 'login':
+                    processor.device_processor.device_login('smartoven', msg_data, client)
 
-            if msg_topic in processor.device_list:
-                device = processor.device_list[msg.topic]
-                threading.Thread(target=processor.device_processor.smartoven_processor,
-                                 args=(device, msg_data)).start()
+                # SmartOven Process
+                if msg_topic in processor.device_list:
+                    device = processor.device_list[msg.topic]
+                    threading.Thread(target=processor.device_processor.smartoven_processor,
+                                     args=(device, msg_data)).start()
+
+            if msg_topic.split('/')[1] == 'tower':
+                # Tower Device Topic: device/tower/xxx
+                pass
 
     client.subscribe("device/smartoven/login")
     client.on_message = on_message
 
 
-def start():
-    client = connect_to_server()
+def start(client_id, user, password, broker, port):
+    client = connect_to_server(client_id, user, password, broker, port)
     receive(client)
     client.loop_forever()
-
-
-if __name__ == '__main__':
-    start()

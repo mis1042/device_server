@@ -1,11 +1,39 @@
 import json
 import time
-
+import threading
 import processor
-from processor import SmartOven
 
 
-def smartoven_processor(device: SmartOven, message):
+def device_login(device_type, msg_data, client):
+    device_connect_name = msg_data['connect_name']
+    device_topic = f"device/{device_type}/{device_connect_name}"
+    if device_topic in processor.device_list:
+        processor.device_list[device_topic].heart_sender._stop()
+        processor.device_list.pop(device_topic)
+    if device_type == 'smartoven':
+        device = processor.SmartOven(device_topic, device_connect_name, client, time.time())
+    elif device_type == 'tower':
+        device = processor.ObservationTower(device_topic, device_connect_name, client, time.time())
+    else:
+        return
+
+    device.heart_sender = threading.Thread(target=processor.device_processor.heart_sender, args=(device,))
+    processor.device_list[device_topic] = device
+    message = {
+        "source": "server",
+        "operation": "login",
+        "connect_name": device_connect_name,
+        "status": "success"
+    }
+    if msg_data['require_time']:
+        message['time'] = time.time()
+    client.publish(device_topic, json.dumps(message))
+    client.subscribe(device_topic)
+    device.heart_sender.start()
+    print(f"{device_type} device {device_connect_name} login success!")
+
+
+def smartoven_processor(device: processor.SmartOven, message):
     if message['operation'] == 'ack':
         for i in device.message_list:
             if i['seq'] == message['ack_seq']:
@@ -35,7 +63,7 @@ def smartoven_processor(device: SmartOven, message):
             device.remain_time = -1
 
 
-def heart_sender(device: SmartOven):
+def heart_sender(device: processor.Device):
     time.sleep(5)
     while True:
         device.publish(json.dumps({

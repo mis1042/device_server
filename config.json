@@ -4,5 +4,6 @@
   "client_id": "Python Server",
   "user": "n",
   "password": "",
-  "openai_key": ""
+  "openai_key": "",
+  "openai_proxy": ""
 }

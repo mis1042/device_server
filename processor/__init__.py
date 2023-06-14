@@ -72,3 +72,20 @@ def judge(seq, device: SmartOven):
         if seq in i.values():
             return True
     return False
+
+
+def show_server_qrcode():
+    import qrcode
+    import socket
+    from PIL import Image
+    s = socket.socket()
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    img = qrcode.make(f"{ip}:{1042}/")
+    img.save('qr.png')
+    img = Image.open('qr.png')
+    img.show()

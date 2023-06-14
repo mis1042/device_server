@@ -18,10 +18,11 @@ with open('config.json', 'r') as f:
     client_id = config['client_id']
     user = config['user']
     password = config['password']
-    openai_key = config['openai_key']
+    openai.api_key = config['openai_key']
     os.environ["HTTP_PROXY"] = config['openai_proxy']
     os.environ["HTTPS_PROXY"] = config['openai_proxy']
 threading.Thread(target=mqtt.start, args=(client_id, user, password, broker, port)).start()
+threading.Thread(target=processor.show_server_qrcode).start()
 
 
 @app.route('/device/<device_type>/<connect_name>/get_info', methods=['GET'])
@@ -110,7 +111,7 @@ def chat():
         return flask.jsonify({"status": "failed", "reason": "invalid request"})
     content = flask.request.json['content']
     request_content = """
-        以下列的格式回复烘干content的每一步的时间与温度，只返回下面的内容不需要其他的
+        以下列的格式回复烘干content的每一步的时间与温度（不超过120），只返回下面的内容不需要其他的
     {
             "steps":[
             {
@@ -129,4 +130,10 @@ def chat():
             {"role": "user", "content": request_content}
         ]
     )
-    return json.dumps(json.loads(rsp.get("choices")[0]["message"]["content"]))
+    response = json.dumps(json.loads(rsp.get("choices")[0]["message"]["content"]))
+    content = f'这里是ChatGPT，已为您找到烘干{content}的方案：\n'
+    j = 1
+    for i in json.loads(response)['steps']:
+        content += f"第 {j} 步：{i['temp']}℃，{i['time']}分钟\n"
+        j = j + 1
+    return {"content": content, "json": response}

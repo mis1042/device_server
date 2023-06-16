@@ -11,6 +11,7 @@ class Device:
         self.server = server
         self.last_seen = last_seen
         self.heart_sender = None
+        self.message_list = []
 
     def publish(self, message):
         self.server.publish(self.topic, message)
@@ -24,7 +25,6 @@ class SmartOven(Device):
         self.ambient_temp = -1
         self.ambient_hum = -1
         self.plan_list = []
-        self.message_list = []
         self.target_temp = -1
         self.remain_time = -1
 
@@ -61,13 +61,28 @@ class SmartOven(Device):
             "plan_id": plan_id
         })
 
+    def sync_work_plan(self):
+        for i in self.plan_list:
+            self.add_work_plan(i['plan_id'], i['start_time'] - 946656000, i['work_time'], i['target_temp'])
+
 
 class ObservationTower(Device):
     def __init__(self, topic, connect_name, server, last_seen):
         Device.__init__(self, topic, connect_name, server, last_seen)
+        self.temp = -1  # 1
+        self.hum = -1  # 2
+        self.dirty_hum = -1  # 3
+        self.earthquake = -1  # 4
+        self.db = -1  # 5
+
+    def publish_ack(self, message):
+        seq = random.randint(0, 9999999)
+        self.message_list.append({"seq": seq, "message": message})
+        message += seq
+        self.publish(message)
 
 
-def judge(seq, device: SmartOven):
+def judge(seq, device: Device):
     for i in device.message_list:
         if seq in i.values():
             return True

@@ -27,11 +27,11 @@ threading.Thread(target=processor.show_server_qrcode).start()
 
 @app.route('/device/<device_type>/<connect_name>/get_info', methods=['GET'])
 def get_device_info(device_type, connect_name):
+    topic = f"device/{device_type}/{connect_name}"
+    if topic not in device_list:
+        return flask.jsonify({"status": "failed", "reason": "device not online"})
+    device = device_list[topic]
     if device_type == 'smartoven':
-        topic = f"device/{device_type}/{connect_name}"
-        if topic not in device_list:
-            return flask.jsonify({"status": "failed", "reason": "device not online"})
-        device = device_list[topic]
         return flask.jsonify({
             "status": "success",
             "internal_temp": device.internal_temp,
@@ -41,6 +41,15 @@ def get_device_info(device_type, connect_name):
             "remain_time": device.remain_time,
             "device_status": device.status,
             "work_plan": device.plan_list
+        })
+    elif device_type == 'tower':
+        return flask.jsonify({
+            "status": "success",
+            "temp": device.temp,
+            "hum": device.hum,
+            "dirty_hum": device.dirty_hum,
+            "earthquake": device.earthquake,
+            "db": device.db
         })
 
 

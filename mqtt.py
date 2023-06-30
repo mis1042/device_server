@@ -52,7 +52,7 @@ def receive(client: mqtt_client):
                 # Tower Device Login
                 processor.device_processor.tower_login(msg_data, client)
 
-            elif msg.topic.split('/')[2] != 'login':
+            else:
                 # Tower Device Process
                 try:
                     device = processor.device_list[msg.topic]

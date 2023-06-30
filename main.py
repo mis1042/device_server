@@ -114,6 +114,20 @@ def delete_work_plan(device_type, connect_name):
         return flask.jsonify({"status": "success"})
 
 
+# Tower Device Post info
+@app.route('/device/<device_type>/<connect_name>/post_info')
+def post_info(device_type, connect_name):
+    topic = f"device/{device_type}/{connect_name}"
+    if topic not in device_list:
+        return flask.jsonify({"status": "failed", "reason": "device not online"})
+    device = device_list[topic]
+    if device_type == 'tower':
+        if flask.request.json is None:
+            return flask.jsonify({"status": "failed", "reason": "invalid request"})
+        device.publish(int(flask.request.json['value']))
+        return flask.jsonify({"status": "success"})
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
     if flask.request.json is None:

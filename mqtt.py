@@ -44,26 +44,7 @@ def receive(client: mqtt_client):
                     threading.Thread(target=processor.device_processor.smartoven_processor,
                                      args=(device, msg_data)).start()
 
-        if msg.topic.split('/')[1] == 'tower':
-            # Tower Device Topic: device/tower/xxx
-            msg_data = msg.payload.decode()
-
-            if 'login' in msg_data and msg.topic.split('/')[2] == 'login':
-                # Tower Device Login
-                processor.device_processor.tower_login(msg_data, client)
-
-            else:
-                # Tower Device Process
-                try:
-                    device = processor.device_list[msg.topic]
-                    threading.Thread(target=processor.device_processor.tower_processor,
-                                     args=(device, msg_data)).start()
-                    return
-                except KeyError:
-                    pass
-
     client.subscribe("device/smartoven/login")
-    client.subscribe("device/tower/login")
     client.on_message = on_message
 
 

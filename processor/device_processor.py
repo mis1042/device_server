@@ -1,6 +1,7 @@
 import json
-import time
 import threading
+import time
+
 import processor
 
 
@@ -63,34 +64,6 @@ def smartoven_processor(device: processor.SmartOven, message):
             device.remain_time = -1
 
 
-def tower_login(msg_data, client):
-    device_connect_name = msg_data.split(',')[1]
-    device_topic = f"device/tower/{device_connect_name}"
-    device = processor.ObservationTower(device_topic, device_connect_name, client, time.time())
-    processor.device_list[device_topic] = device
-    client.subscribe(device_topic)
-    print(f"Tower Device {device_connect_name} login success!")
-
-
-def tower_processor(device: processor.ObservationTower, message):
-    device.last_seen = time.time()
-    if message[0] == '1':
-        message = message[1::]
-        device.temp = message
-    if message[0] == '2':
-        message = message[1::]
-        device.hum = message
-    if message[0] == '3':
-        message = message[1::]
-        device.dirty_hum = message
-    if message[0] == '4':
-        message = message[1::]
-        device.earthquake = message
-    if message[0] == '5':
-        message = message[1::]
-        device.db = message
-
-
 def heart_sender(device: processor.SmartOven):
     time.sleep(5)
     while True:
@@ -103,4 +76,3 @@ def heart_sender(device: processor.SmartOven):
             processor.device_list.pop(device.topic)
             print(f"Device {device.connect_name} offline!")
             break
-

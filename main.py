@@ -97,55 +97,6 @@ def delete_work_plan(device_type, connect_name):
         return flask.jsonify({"status": "success"})
 
 
-# Tower Device Post info
-@app.route('/device/<device_type>/<connect_name>/post_info')
-def post_info(device_type, connect_name):
-    topic = f"device/{device_type}/{connect_name}"
-    if topic not in device_list:
-        return flask.jsonify({"status": "failed", "reason": "device not online"})
-    device = device_list[topic]
-    if device_type == 'tower':
-        if flask.request.json is None:
-            return flask.jsonify({"status": "failed", "reason": "invalid request"})
-        device.publish(int(flask.request.json['value']))
-        return flask.jsonify({"status": "success"})
-
-
-@app.route('/chat_legacy', methods=['POST'])
-def chat_legacy():
-    if flask.request.json is None:
-        return flask.jsonify({"status": "failed", "reason": "invalid request"})
-    content = flask.request.json['content']
-    request_content = """
-        以下列的格式回复烘干content的每一步的时间与温度（不超过120），只返回下面的内容不需要其他的
-    {
-            "steps":[
-            {
-            "temp":20,
-            // 使用摄氏度
-            "time":20
-            //使用分钟
-            },
-            ...
-        ]
-    }
-    """.replace('content', content)
-
-    rsp = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": request_content}
-        ]
-    )
-    response = json.dumps(json.loads(rsp.get("choices")[0]["message"]["content"]))
-    content = f'这里是ChatGPT，已为您找到烘干{content}的方案：\n'
-    j = 1
-    for i in json.loads(response)['steps']:
-        content += f"第 {j} 步：{i['temp']}℃，{i['time']}分钟\n"
-        j = j + 1
-    return {"content": content, "json": response}
-
-
 @app.route('/device/<device_type>/<connect_name>/create_chat')
 def create_chat(device_type, connect_name):
     if device_type == 'smartoven':

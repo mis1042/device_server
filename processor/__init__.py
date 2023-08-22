@@ -28,6 +28,8 @@ class SmartOven(Device):
         self.target_temp = -1
         self.remain_time = -1
 
+        self.chat = None
+
     def publish_ack(self, message):
         seq = random.randint(0, 9999999)
         self.message_list.append({"seq": seq, "message": message})
@@ -61,6 +63,18 @@ class SmartOven(Device):
             "plan_id": plan_id
         })
 
+    def get_status(self):
+        return {
+            "status": "success",
+            "internal_temp": self.internal_temp,
+            "ambient_temp": self.ambient_temp,
+            "ambient_hum": self.ambient_hum,
+            "target_temp": self.target_temp,
+            "remain_time": self.remain_time,
+            "device_status": self.status,
+            "work_plan": self.plan_list
+        }
+
     def sync_work_plan(self):
         for i in self.plan_list:
             self.add_work_plan(i['plan_id'], i['start_time'] - 946656000, i['work_time'], i['target_temp'])
@@ -81,6 +95,15 @@ class ObservationTower(Device):
         message += seq
         self.publish(message)
 
+    def get_status(self):
+        return {
+            "status": "success",
+            "temp": self.temp,
+            "hum": self.hum,
+            "dirty_hum": self.dirty_hum,
+            "earthquake": self.earthquake,
+            "db": self.db
+        }
 
 def judge(seq, device: Device):
     for i in device.message_list:

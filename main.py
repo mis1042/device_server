@@ -1,13 +1,15 @@
-import threading
-import time
-import openai
 import json
 import os
+import threading
+import time
+
 import flask
+import openai
 from flask_cors import CORS
+
 import mqtt
 import processor
-from processor import device_list
+from processor import device_list, gpt_processor
 
 app = flask.Flask(__name__)
 CORS(app, resources=r'/*')
@@ -31,26 +33,7 @@ def get_device_info(device_type, connect_name):
     if topic not in device_list:
         return flask.jsonify({"status": "failed", "reason": "device not online"})
     device = device_list[topic]
-    if device_type == 'smartoven':
-        return flask.jsonify({
-            "status": "success",
-            "internal_temp": device.internal_temp,
-            "ambient_temp": device.ambient_temp,
-            "ambient_hum": device.ambient_hum,
-            "target_temp": device.target_temp,
-            "remain_time": device.remain_time,
-            "device_status": device.status,
-            "work_plan": device.plan_list
-        })
-    elif device_type == 'tower':
-        return flask.jsonify({
-            "status": "success",
-            "temp": device.temp,
-            "hum": device.hum,
-            "dirty_hum": device.dirty_hum,
-            "earthquake": device.earthquake,
-            "db": device.db
-        })
+    return flask.jsonify(device.get_status())
 
 
 # SmartOven Device: Set Working
@@ -128,8 +111,8 @@ def post_info(device_type, connect_name):
         return flask.jsonify({"status": "success"})
 
 
-@app.route('/chat', methods=['POST'])
-def chat():
+@app.route('/chat_legacy', methods=['POST'])
+def chat_legacy():
     if flask.request.json is None:
         return flask.jsonify({"status": "failed", "reason": "invalid request"})
     content = flask.request.json['content']
@@ -147,6 +130,7 @@ def chat():
         ]
     }
     """.replace('content', content)
+
     rsp = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -160,3 +144,33 @@ def chat():
         content += f"第 {j} 步：{i['temp']}℃，{i['time']}分钟\n"
         j = j + 1
     return {"content": content, "json": response}
+
+
+@app.route('/device/<device_type>/<connect_name>/create_chat')
+def create_chat(device_type, connect_name):
+    if device_type == 'smartoven':
+        topic = f"device/{device_type}/{connect_name}"
+        if topic not in device_list:
+            return flask.jsonify({"status": "failed", "reason": "device not online"})
+        device = device_list[topic]
+        device.chat = processor.gpt_processor.AIChat(device)
+        return flask.jsonify({"status": "success"})
+
+
+@app.route('/device/<device_type>/<connect_name>/chat', methods=['POST'])
+def chat(device_type, connect_name):
+    if device_type == 'smartoven':
+        topic = f"device/{device_type}/{connect_name}"
+        if topic not in device_list:
+            return flask.jsonify({"status": "failed", "reason": "device not online"})
+        if flask.request.json is None:
+            return flask.jsonify({"status": "failed", "reason": "invalid request"})
+        device = device_list[topic]
+        if device.chat is None:
+            device.chat = processor.gpt_processor.AIChat(device)
+        try:
+            return flask.jsonify({
+                "messages": device.chat.chat(flask.request.json['content'])
+            })
+        except openai.error.RateLimitError:
+            return "", 500
